@@ -2,8 +2,9 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 
+
 # ============================================================
-# PAGE CONFIGURATION
+# PAGE CONFIG
 # ============================================================
 
 st.set_page_config(
@@ -13,6 +14,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+
 # ============================================================
 # CUSTOM CSS
 # ============================================================
@@ -20,19 +22,26 @@ st.set_page_config(
 st.markdown("""
 <style>
 
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+html, body, [class*="css"] {
+    font-family: 'Inter', sans-serif;
+}
+
 .stApp {
     background:
         radial-gradient(
             circle at 5% 5%,
-            rgba(0, 220, 255, 0.14),
+            rgba(0, 220, 255, 0.13),
             transparent 25%
         ),
         radial-gradient(
             circle at 95% 10%,
-            rgba(100, 70, 255, 0.16),
+            rgba(100, 80, 255, 0.16),
             transparent 28%
         ),
         #07111f;
+
     color: #f5f8fc;
 }
 
@@ -42,12 +51,14 @@ st.markdown("""
     padding-bottom: 3rem;
 }
 
+
 /* SIDEBAR */
 
 section[data-testid="stSidebar"] {
     background: #081525;
     border-right: 1px solid rgba(255,255,255,0.08);
 }
+
 
 /* HERO */
 
@@ -61,28 +72,33 @@ section[data-testid="stSidebar"] {
             135deg,
             rgba(0,220,255,0.16),
             rgba(83,73,255,0.18)
-        ),
-        rgba(10,23,41,0.94);
+        );
 
     border: 1px solid rgba(255,255,255,0.10);
 
     box-shadow:
-        0 25px 70px rgba(0,0,0,0.32);
+        0 25px 70px rgba(0,0,0,0.30);
 }
 
 .badge {
     display: inline-block;
+
     padding: 7px 15px;
+
     border-radius: 30px;
 
     background: rgba(0,220,255,0.12);
+
     border: 1px solid rgba(0,220,255,0.25);
 
     color: #6eeaff;
+
     font-size: 12px;
+
     font-weight: 700;
 
     letter-spacing: 1px;
+
     margin-bottom: 15px;
 }
 
@@ -92,26 +108,33 @@ section[data-testid="stSidebar"] {
     letter-spacing: -1px;
 }
 
-.hero-subtitle {
+.hero-text {
     margin-top: 12px;
+
     max-width: 850px;
 
     color: #a9bad0;
+
     font-size: 17px;
+
     line-height: 1.7;
 }
 
-/* KPI */
+
+/* KPI CARDS */
 
 .kpi {
     padding: 24px;
-    min-height: 145px;
+
+    min-height: 140px;
 
     border-radius: 22px;
 
-    background: rgba(14,30,50,0.90);
+    background:
+        rgba(14,30,50,0.90);
 
-    border: 1px solid rgba(255,255,255,0.08);
+    border:
+        1px solid rgba(255,255,255,0.08);
 
     box-shadow:
         0 14px 40px rgba(0,0,0,0.22);
@@ -121,9 +144,11 @@ section[data-testid="stSidebar"] {
     color: #8fa5bd;
 
     font-size: 12px;
+
     font-weight: 700;
 
     text-transform: uppercase;
+
     letter-spacing: 1px;
 }
 
@@ -131,27 +156,33 @@ section[data-testid="stSidebar"] {
     margin-top: 12px;
 
     font-size: 30px;
+
     font-weight: 800;
 
-    color: #ffffff;
+    color: white;
 }
 
 .kpi-note {
     margin-top: 7px;
 
     color: #6eeaff;
+
     font-size: 12px;
 }
+
 
 /* SECTIONS */
 
 .section-title {
-    margin-top: 32px;
+    margin-top: 30px;
+
     margin-bottom: 15px;
 
     font-size: 25px;
+
     font-weight: 750;
 }
+
 
 /* INFO */
 
@@ -160,36 +191,43 @@ section[data-testid="stSidebar"] {
 
     border-radius: 20px;
 
-    background: rgba(12,27,46,0.85);
+    background:
+        rgba(12,27,46,0.85);
 
-    border: 1px solid rgba(255,255,255,0.07);
+    border:
+        1px solid rgba(255,255,255,0.07);
 
     color: #b9c8d9;
 
     line-height: 1.7;
 }
 
+
 /* FOOTER */
 
 .footer {
     margin-top: 50px;
+
     padding: 30px;
 
     text-align: center;
 
-    border-top: 1px solid rgba(255,255,255,0.08);
+    border-top:
+        1px solid rgba(255,255,255,0.08);
 
     color: #8ea1b7;
 }
 
 .footer strong {
-    color: #ffffff;
+    color: white;
 }
 
 </style>
 """, unsafe_allow_html=True)
+
+
 # ============================================================
-# DATA SOURCES
+# DATA URLs
 # ============================================================
 
 CASES_URL = (
@@ -218,74 +256,85 @@ VACCINE_URL = (
 @st.cache_data(ttl=3600)
 def load_csv(url):
 
-    df = pd.read_csv(
+    return pd.read_csv(
         url,
         storage_options={
             "User-Agent":
-            "Mozilla/5.0 COVID-19-Pulse-Dashboard"
+            "Mozilla/5.0 COVID-19 Pulse Dashboard"
         }
     )
 
-    # --------------------------------------------------------
-    # STANDARDIZE COLUMN NAMES
-    # --------------------------------------------------------
 
-    df.columns = [
-        str(column).strip().lower()
+# ============================================================
+# NORMALIZE DATE COLUMN
+# ============================================================
+
+def normalize_date_column(df):
+
+    df = df.copy()
+
+    # Some OWID datasets use "day"
+    if "Date" in df.columns:
+
+        df["Date"] = pd.to_datetime(
+            df["Date"],
+            errors="coerce"
+        )
+
+        return df
+
+    if "date" in df.columns:
+
+        df["Date"] = pd.to_datetime(
+            df["date"],
+            errors="coerce"
+        )
+
+        return df
+
+    if "day" in df.columns:
+
+        df["Date"] = pd.to_datetime(
+            df["day"],
+            errors="coerce"
+        )
+
+        return df
+
+    raise ValueError(
+        "Date column not found. Columns received: "
+        + str(df.columns.tolist())
+    )
+
+
+# ============================================================
+# FIND VALUE COLUMN
+# ============================================================
+
+def find_value_column(df):
+
+    ignored = {
+        "Entity",
+        "Code",
+        "Date",
+        "date",
+        "day"
+    }
+
+    possible_columns = [
+        column
         for column in df.columns
+        if column not in ignored
     ]
 
-    # --------------------------------------------------------
-    # RENAME COMMON OWID COLUMNS
-    # --------------------------------------------------------
-
-    rename_map = {}
-
-    for column in df.columns:
-
-        if column == "entity":
-            rename_map[column] = "Entity"
-
-        elif column == "code":
-            rename_map[column] = "Code"
-
-        elif column == "date":
-            rename_map[column] = "Date"
-
-    df = df.rename(
-        columns=rename_map
-    )
-
-    # --------------------------------------------------------
-    # CHECK REQUIRED COLUMNS
-    # --------------------------------------------------------
-
-    if "Date" not in df.columns:
+    if not possible_columns:
 
         raise ValueError(
-            "Date column not found. "
-            "Columns received: "
+            "No data value column found. Columns received: "
             + str(df.columns.tolist())
         )
 
-    if "Entity" not in df.columns:
-
-        raise ValueError(
-            "Entity column not found. "
-            "Columns received: "
-            + str(df.columns.tolist())
-        )
-
-    # --------------------------------------------------------
-    # DATE CONVERSION
-    # --------------------------------------------------------
-
-    df["Date"] = pd.to_datetime(
-        df["Date"],
-        errors="coerce"
-    )
-
-    return df
+    return possible_columns[0]
 
 
 # ============================================================
@@ -295,19 +344,32 @@ def load_csv(url):
 @st.cache_data(ttl=3600)
 def load_all_data():
 
-    cases = load_csv(
-        CASES_URL
-    )
+    cases = load_csv(CASES_URL)
 
-    deaths = load_csv(
-        DEATHS_URL
-    )
+    deaths = load_csv(DEATHS_URL)
 
-    vaccines = load_csv(
-        VACCINE_URL
-    )
+    vaccines = load_csv(VACCINE_URL)
 
-    return cases, deaths, vaccines
+    cases = normalize_date_column(cases)
+
+    deaths = normalize_date_column(deaths)
+
+    vaccines = normalize_date_column(vaccines)
+
+    case_col = find_value_column(cases)
+
+    death_col = find_value_column(deaths)
+
+    vaccine_col = find_value_column(vaccines)
+
+    return (
+        cases,
+        deaths,
+        vaccines,
+        case_col,
+        death_col,
+        vaccine_col
+    )
 
 
 # ============================================================
@@ -316,7 +378,14 @@ def load_all_data():
 
 try:
 
-    cases, deaths, vaccines = load_all_data()
+    (
+        cases,
+        deaths,
+        vaccines,
+        case_col,
+        death_col,
+        vaccine_col
+    ) = load_all_data()
 
 except Exception as error:
 
@@ -325,62 +394,31 @@ except Exception as error:
     )
 
     st.warning(
-        "The COVID-19 data source could not "
-        "be loaded correctly."
+        "The COVID-19 data source could not be "
+        "loaded or its format has changed."
     )
 
-    st.code(
-        str(error)
-    )
+    st.code(str(error))
 
     st.stop()
 
 
 # ============================================================
-# FIND VALUE COLUMNS
+# CLEAN DATA
 # ============================================================
 
-def find_value_column(df):
+cases = cases.dropna(
+    subset=["Entity", "Date"]
+).copy()
 
-    ignored_columns = {
-        "Entity",
-        "Code",
-        "Date"
-    }
+deaths = deaths.dropna(
+    subset=["Entity", "Date"]
+).copy()
 
-    possible_columns = [
-        column
-        for column in df.columns
-        if column not in ignored_columns
-    ]
+vaccines = vaccines.dropna(
+    subset=["Entity", "Date"]
+).copy()
 
-    if len(possible_columns) == 0:
-
-        raise ValueError(
-            "No data value column was found. "
-            "Available columns: "
-            + str(df.columns.tolist())
-        )
-
-    return possible_columns[0]
-
-
-case_col = find_value_column(
-    cases
-)
-
-death_col = find_value_column(
-    deaths
-)
-
-vaccine_col = find_value_column(
-    vaccines
-)
-
-
-# ============================================================
-# CONVERT DATA TO NUMERIC
-# ============================================================
 
 cases[case_col] = pd.to_numeric(
     cases[case_col],
@@ -409,6 +447,7 @@ countries = sorted(
     .tolist()
 )
 
+
 country_options = [
     "🌍 All Countries"
 ] + countries
@@ -429,10 +468,11 @@ GLOBAL HEALTH DATA • COVID-19
 🦠 COVID-19 Pulse
 </div>
 
-<div class="hero-subtitle">
+<div class="hero-text">
 Explore COVID-19 trends across countries with
-interactive charts, global comparisons,
-vaccination information and downloadable data.
+interactive statistics, global comparisons,
+case trends, death trends, vaccination data
+and downloadable information.
 </div>
 
 </div>
@@ -449,12 +489,15 @@ st.sidebar.markdown(
 
 st.sidebar.markdown("---")
 
+
 selected_country = st.sidebar.selectbox(
     "🌍 Select Country",
     country_options
 )
 
+
 st.sidebar.markdown("---")
+
 
 st.sidebar.markdown(
     "### 📅 Time Period"
@@ -465,29 +508,21 @@ st.sidebar.markdown(
 # DATE RANGE
 # ============================================================
 
-valid_dates = (
-    cases["Date"]
-    .dropna()
-)
+min_date = cases["Date"].min().date()
 
-if valid_dates.empty:
+max_date = cases["Date"].max().date()
 
-    st.error(
-        "No valid COVID-19 dates were found."
-    )
-
-    st.stop()
-
-min_date = valid_dates.min().date()
-max_date = valid_dates.max().date()
 
 date_range = st.sidebar.date_input(
     "Select date range",
+
     value=(
         min_date,
         max_date
     ),
+
     min_value=min_date,
+
     max_value=max_date
 )
 
@@ -517,19 +552,21 @@ else:
 # FILTER DATA
 # ============================================================
 
-filtered_cases = cases[
+cases_filtered = cases[
     (cases["Date"] >= start_date)
     &
     (cases["Date"] <= end_date)
 ].copy()
 
-filtered_deaths = deaths[
+
+deaths_filtered = deaths[
     (deaths["Date"] >= start_date)
     &
     (deaths["Date"] <= end_date)
 ].copy()
 
-filtered_vaccines = vaccines[
+
+vaccines_filtered = vaccines[
     (vaccines["Date"] >= start_date)
     &
     (vaccines["Date"] <= end_date)
@@ -537,7 +574,7 @@ filtered_vaccines = vaccines[
 
 
 # ============================================================
-# ALL COUNTRIES MODE
+# GLOBAL MODE
 # ============================================================
 
 if selected_country == "🌍 All Countries":
@@ -549,12 +586,39 @@ if selected_country == "🌍 All Countries":
         unsafe_allow_html=True
     )
 
-    # ========================================================
+
+    # --------------------------------------------------------
+    # IMPORTANT:
+    # Do NOT add continent/World aggregate rows.
+    # Keep actual countries only.
+    # --------------------------------------------------------
+
+    global_cases_data = cases_filtered.copy()
+
+    if "Code" in global_cases_data.columns:
+
+        global_cases_data = global_cases_data[
+            ~global_cases_data["Code"]
+            .astype(str)
+            .str.startswith("OWID_")
+        ]
+
+
+    global_deaths_data = deaths_filtered.copy()
+
+    if "Code" in global_deaths_data.columns:
+
+        global_deaths_data = global_deaths_data[
+            ~global_deaths_data["Code"]
+            .astype(str)
+            .str.startswith("OWID_")
+        ]
+        # --------------------------------------------------------
     # GLOBAL CASES
-    # ========================================================
+    # --------------------------------------------------------
 
     global_cases = (
-        filtered_cases
+        global_cases_data
         .groupby(
             "Date",
             as_index=False
@@ -562,17 +626,13 @@ if selected_country == "🌍 All Countries":
         .sum()
     )
 
-    global_cases[case_col] = pd.to_numeric(
-        global_cases[case_col],
-        errors="coerce"
-    )
 
-    # ========================================================
+    # --------------------------------------------------------
     # GLOBAL DEATHS
-    # ========================================================
+    # --------------------------------------------------------
 
     global_deaths = (
-        filtered_deaths
+        global_deaths_data
         .groupby(
             "Date",
             as_index=False
@@ -580,81 +640,84 @@ if selected_country == "🌍 All Countries":
         .sum()
     )
 
-    global_deaths[death_col] = pd.to_numeric(
-        global_deaths[death_col],
-        errors="coerce"
-    )
 
-    # ========================================================
+    # --------------------------------------------------------
     # LATEST CASES
-    # ========================================================
+    # --------------------------------------------------------
 
-    case_values = (
-        global_cases[case_col]
-        .dropna()
-    )
+    if not global_cases.empty:
 
-    if len(case_values) > 0:
-
-        latest_cases = case_values.iloc[-1]
+        latest_cases = (
+            global_cases[case_col]
+            .dropna()
+            .iloc[-1]
+        )
 
     else:
 
         latest_cases = 0
 
 
-    # ========================================================
+    # --------------------------------------------------------
     # LATEST DEATHS
-    # ========================================================
+    # --------------------------------------------------------
 
-    death_values = (
-        global_deaths[death_col]
-        .dropna()
-    )
+    if not global_deaths.empty:
 
-    if len(death_values) > 0:
-
-        latest_deaths = death_values.iloc[-1]
+        latest_deaths = (
+            global_deaths[death_col]
+            .dropna()
+            .iloc[-1]
+        )
 
     else:
 
         latest_deaths = 0
 
 
-    # ========================================================
+    # --------------------------------------------------------
     # GLOBAL VACCINATION
-    # ========================================================
+    # --------------------------------------------------------
 
     latest_vaccine = 0
 
-    if not filtered_vaccines.empty:
+
+    if not vaccines_filtered.empty:
+
+        vaccine_data = vaccines_filtered.copy()
+
+        if "Code" in vaccine_data.columns:
+
+            vaccine_data = vaccine_data[
+                ~vaccine_data["Code"]
+                .astype(str)
+                .str.startswith("OWID_")
+            ]
+
 
         latest_vaccine_date = (
-            filtered_vaccines["Date"]
-            .max()
+            vaccine_data["Date"].max()
         )
 
-        latest_vaccine_data = (
-            filtered_vaccines[
-                filtered_vaccines["Date"]
-                == latest_vaccine_date
-            ]
-        )
 
-        vaccine_values = pd.to_numeric(
-            latest_vaccine_data[
+        latest_vaccine_rows = vaccine_data[
+            vaccine_data["Date"]
+            == latest_vaccine_date
+        ]
+
+
+        latest_vaccine = (
+            latest_vaccine_rows[
                 vaccine_col
-            ],
-            errors="coerce"
+            ]
+            .dropna()
+            .mean()
         )
 
-        if not vaccine_values.dropna().empty:
 
-            latest_vaccine = (
-                vaccine_values
-                .dropna()
-                .mean()
-            )
+        if pd.isna(latest_vaccine):
+
+            latest_vaccine = 0
 
 
     # ========================================================
@@ -662,6 +725,7 @@ if selected_country == "🌍 All Countries":
     # ========================================================
 
     c1, c2, c3 = st.columns(3)
+
 
     with c1:
 
@@ -686,6 +750,7 @@ if selected_country == "🌍 All Countries":
             unsafe_allow_html=True
         )
 
+
     with c2:
 
         st.markdown(
@@ -708,6 +773,7 @@ if selected_country == "🌍 All Countries":
             """,
             unsafe_allow_html=True
         )
+
 
     with c3:
 
@@ -734,7 +800,7 @@ if selected_country == "🌍 All Countries":
 
 
     # ========================================================
-    # GLOBAL CASE CHART
+    # CASE TREND
     # ========================================================
 
     st.markdown(
@@ -744,6 +810,7 @@ if selected_country == "🌍 All Countries":
         unsafe_allow_html=True
     )
 
+
     fig_cases = px.area(
         global_cases,
         x="Date",
@@ -751,18 +818,14 @@ if selected_country == "🌍 All Countries":
         title="Worldwide Weekly COVID-19 Cases"
     )
 
+
     fig_cases.update_layout(
         template="plotly_dark",
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
-        hovermode="x unified",
-        margin=dict(
-            l=20,
-            r=20,
-            t=60,
-            b=20
-        )
+        hovermode="x unified"
     )
+
 
     st.plotly_chart(
         fig_cases,
@@ -771,7 +834,7 @@ if selected_country == "🌍 All Countries":
 
 
     # ========================================================
-    # GLOBAL DEATH CHART
+    # DEATH TREND
     # ========================================================
 
     st.markdown(
@@ -781,6 +844,7 @@ if selected_country == "🌍 All Countries":
         unsafe_allow_html=True
     )
 
+
     fig_deaths = px.line(
         global_deaths,
         x="Date",
@@ -788,23 +852,21 @@ if selected_country == "🌍 All Countries":
         title="Worldwide Weekly COVID-19 Deaths"
     )
 
+
     fig_deaths.update_layout(
         template="plotly_dark",
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
-        hovermode="x unified",
-        margin=dict(
-            l=20,
-            r=20,
-            t=60,
-            b=20
-        )
+        hovermode="x unified"
     )
+
 
     st.plotly_chart(
         fig_deaths,
         use_container_width=True
-        )
+    )
+
+
     # ========================================================
     # COUNTRY COMPARISON
     # ========================================================
@@ -816,46 +878,39 @@ if selected_country == "🌍 All Countries":
         unsafe_allow_html=True
     )
 
+
     latest_country = (
-        filtered_cases
+        global_cases_data
         .sort_values("Date")
         .groupby("Entity")
         .tail(1)
         .copy()
     )
 
-    latest_country[case_col] = pd.to_numeric(
-        latest_country[case_col],
-        errors="coerce"
+
+    latest_country = latest_country.dropna(
+        subset=[case_col]
     )
+
 
     latest_country = (
         latest_country
-        .dropna(
-            subset=[case_col]
-        )
         .sort_values(
             case_col,
             ascending=False
         )
-        .head(15)
+        .head(20)
     )
 
-
-    # ========================================================
-    # BAR CHART
-    # ========================================================
 
     fig_rank = px.bar(
         latest_country,
         x=case_col,
         y="Entity",
         orientation="h",
-        title=(
-            "Top 15 Countries — "
-            "Latest Weekly Cases"
-        )
+        title="Top 20 Countries — Latest Weekly Cases"
     )
+
 
     fig_rank.update_layout(
         template="plotly_dark",
@@ -863,14 +918,9 @@ if selected_country == "🌍 All Countries":
         plot_bgcolor="rgba(0,0,0,0)",
         yaxis=dict(
             categoryorder="total ascending"
-        ),
-        margin=dict(
-            l=20,
-            r=20,
-            t=60,
-            b=20
         )
     )
+
 
     st.plotly_chart(
         fig_rank,
@@ -884,10 +934,11 @@ if selected_country == "🌍 All Countries":
 
     st.markdown(
         '<div class="section-title">'
-        '📋 Country Data'
+        '📋 Global Country Data'
         '</div>',
         unsafe_allow_html=True
     )
+
 
     table = latest_country[
         [
@@ -897,11 +948,13 @@ if selected_country == "🌍 All Countries":
         ]
     ].copy()
 
+
     table.columns = [
         "Country",
         "Latest Date",
         "Weekly Cases"
     ]
+
 
     st.dataframe(
         table,
@@ -916,12 +969,14 @@ if selected_country == "🌍 All Countries":
 
     st.download_button(
         "⬇️ Download Global Country Data",
+
         data=table.to_csv(
             index=False
         ),
-        file_name=(
-            "global_covid_country_data.csv"
-        ),
+
+        file_name=
+        "global_covid_country_data.csv",
+
         mime="text/csv"
     )
 
@@ -934,39 +989,42 @@ else:
 
     country = selected_country
 
+
     st.markdown(
         f"""
         <div class="section-title">
-        📍 {country} Overview
+        📍 {country} Dashboard
         </div>
         """,
         unsafe_allow_html=True
     )
 
 
-    # ========================================================
-    # COUNTRY DATA
-    # ========================================================
+    # --------------------------------------------------------
+    # FILTER COUNTRY
+    # --------------------------------------------------------
 
-    country_cases = filtered_cases[
-        filtered_cases["Entity"]
-        == country
-    ].copy()
-
-    country_deaths = filtered_deaths[
-        filtered_deaths["Entity"]
-        == country
-    ].copy()
-
-    country_vaccines = filtered_vaccines[
-        filtered_vaccines["Entity"]
+    country_cases = cases_filtered[
+        cases_filtered["Entity"]
         == country
     ].copy()
 
 
-    # ========================================================
+    country_deaths = deaths_filtered[
+        deaths_filtered["Entity"]
+        == country
+    ].copy()
+
+
+    country_vaccine = vaccines_filtered[
+        vaccines_filtered["Entity"]
+        == country
+    ].copy()
+
+
+    # --------------------------------------------------------
     # SORT
-    # ========================================================
+    # --------------------------------------------------------
 
     country_cases = country_cases.sort_values(
         "Date"
@@ -976,59 +1034,48 @@ else:
         "Date"
     )
 
-    country_vaccines = country_vaccines.sort_values(
+    country_vaccine = country_vaccine.sort_values(
         "Date"
     )
 
 
-    # ========================================================
-    # LATEST CASES
-    # ========================================================
+    # --------------------------------------------------------
+    # LATEST VALUES
+    # --------------------------------------------------------
 
-    case_values = pd.to_numeric(
-        country_cases[case_col],
-        errors="coerce"
-    ).dropna()
+    if not country_cases.empty:
 
-    if len(case_values) > 0:
-
-        latest_cases = case_values.iloc[-1]
+        latest_cases = (
+            country_cases[case_col]
+            .dropna()
+            .iloc[-1]
+        )
 
     else:
 
         latest_cases = 0
 
 
-    # ========================================================
-    # LATEST DEATHS
-    # ========================================================
+    if not country_deaths.empty:
 
-    death_values = pd.to_numeric(
-        country_deaths[death_col],
-        errors="coerce"
-    ).dropna()
-
-    if len(death_values) > 0:
-
-        latest_deaths = death_values.iloc[-1]
+        latest_deaths = (
+            country_deaths[death_col]
+            .dropna()
+            .iloc[-1]
+        )
 
     else:
 
         latest_deaths = 0
 
 
-    # ========================================================
-    # LATEST VACCINATION
-    # ========================================================
+    if not country_vaccine.empty:
 
-    vaccine_values = pd.to_numeric(
-        country_vaccines[vaccine_col],
-        errors="coerce"
-    ).dropna()
-
-    if len(vaccine_values) > 0:
-
-        latest_vaccine = vaccine_values.iloc[-1]
+        latest_vaccine = (
+            country_vaccine[vaccine_col]
+            .dropna()
+            .iloc[-1]
+        )
 
     else:
 
@@ -1040,6 +1087,7 @@ else:
     # ========================================================
 
     c1, c2, c3 = st.columns(3)
+
 
     with c1:
 
@@ -1064,6 +1112,7 @@ else:
             unsafe_allow_html=True
         )
 
+
     with c2:
 
         st.markdown(
@@ -1086,6 +1135,7 @@ else:
             """,
             unsafe_allow_html=True
         )
+
 
     with c3:
 
@@ -1112,7 +1162,7 @@ else:
 
 
     # ========================================================
-    # COUNTRY CASE CHART
+    # CASE CHART
     # ========================================================
 
     st.markdown(
@@ -1122,31 +1172,41 @@ else:
         unsafe_allow_html=True
     )
 
-    fig_country_cases = px.area(
-        country_cases,
-        x="Date",
-        y=case_col,
-        title=(
-            f"Weekly COVID-19 Cases — "
-            f"{country}"
+
+    if not country_cases.empty:
+
+        fig_cases = px.area(
+            country_cases,
+            x="Date",
+            y=case_col,
+            title=
+            f"Weekly COVID-19 Cases — {country}"
         )
-    )
 
-    fig_country_cases.update_layout(
-        template="plotly_dark",
-        paper_bgcolor="rgba(0,0,0,0)",
-        plot_bgcolor="rgba(0,0,0,0)",
-        hovermode="x unified"
-    )
 
-    st.plotly_chart(
-        fig_country_cases,
-        use_container_width=True
-    )
+        fig_cases.update_layout(
+            template="plotly_dark",
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)",
+            hovermode="x unified"
+        )
+
+
+        st.plotly_chart(
+            fig_cases,
+            use_container_width=True
+        )
+
+    else:
+
+        st.info(
+            "No case data available for this country "
+            "in the selected period."
+        )
 
 
     # ========================================================
-    # COUNTRY DEATH CHART
+    # DEATH CHART
     # ========================================================
 
     st.markdown(
@@ -1156,27 +1216,37 @@ else:
         unsafe_allow_html=True
     )
 
-    fig_country_deaths = px.line(
-        country_deaths,
-        x="Date",
-        y=death_col,
-        title=(
-            f"Weekly COVID-19 Deaths — "
-            f"{country}"
+
+    if not country_deaths.empty:
+
+        fig_deaths = px.line(
+            country_deaths,
+            x="Date",
+            y=death_col,
+            title=
+            f"Weekly COVID-19 Deaths — {country}"
         )
-    )
 
-    fig_country_deaths.update_layout(
-        template="plotly_dark",
-        paper_bgcolor="rgba(0,0,0,0)",
-        plot_bgcolor="rgba(0,0,0,0)",
-        hovermode="x unified"
-    )
 
-    st.plotly_chart(
-        fig_country_deaths,
-        use_container_width=True
-    )
+        fig_deaths.update_layout(
+            template="plotly_dark",
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)",
+            hovermode="x unified"
+        )
+
+
+        st.plotly_chart(
+            fig_deaths,
+            use_container_width=True
+        )
+
+    else:
+
+        st.info(
+            "No death data available for this country "
+            "in the selected period."
+        )
 
 
     # ========================================================
@@ -1190,27 +1260,36 @@ else:
         unsafe_allow_html=True
     )
 
-    fig_country_vaccine = px.area(
-        country_vaccines,
-        x="Date",
-        y=vaccine_col,
-        title=(
-            f"Fully Vaccinated Population — "
-            f"{country}"
+
+    if not country_vaccine.empty:
+
+        fig_vaccine = px.area(
+            country_vaccine,
+            x="Date",
+            y=vaccine_col,
+            title=
+            f"Vaccination Progress — {country}"
         )
-    )
 
-    fig_country_vaccine.update_layout(
-        template="plotly_dark",
-        paper_bgcolor="rgba(0,0,0,0)",
-        plot_bgcolor="rgba(0,0,0,0)",
-        hovermode="x unified"
-    )
 
-    st.plotly_chart(
-        fig_country_vaccine,
-        use_container_width=True
-    )
+        fig_vaccine.update_layout(
+            template="plotly_dark",
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)",
+            hovermode="x unified"
+        )
+
+
+        st.plotly_chart(
+            fig_vaccine,
+            use_container_width=True
+        )
+
+    else:
+
+        st.info(
+            "No vaccination data available for this country."
+        )
 
 
     # ========================================================
@@ -1219,47 +1298,59 @@ else:
 
     st.markdown(
         '<div class="section-title">'
-        '📋 Recent Data'
+        '📋 Recent COVID-19 Data'
         '</div>',
         unsafe_allow_html=True
     )
 
-    recent = country_cases[
-        [
+
+    if not country_cases.empty:
+
+        recent = country_cases[
+            [
+                "Date",
+                case_col
+            ]
+        ].tail(20).copy()
+
+
+        recent.columns = [
             "Date",
-            case_col
+            "Weekly Cases"
         ]
-    ].tail(20).copy()
-
-    recent.columns = [
-        "Date",
-        "Weekly Cases"
-    ]
-
-    st.dataframe(
-        recent,
-        use_container_width=True,
-        hide_index=True
-    )
 
 
-    # ========================================================
-    # DOWNLOAD COUNTRY DATA
-    # ========================================================
+        st.dataframe(
+            recent,
+            use_container_width=True,
+            hide_index=True
+        )
 
-    st.download_button(
-        "⬇️ Download Country CSV",
-        data=country_cases.to_csv(
-            index=False
-        ),
-        file_name=(
-            country.lower()
+
+        # ----------------------------------------------------
+        # DOWNLOAD
+        # ----------------------------------------------------
+
+        safe_name = (
+            country
+            .lower()
             .replace(" ", "_")
-            .replace(",", "")
-            + "_covid_data.csv"
-        ),
-        mime="text/csv"
-    )
+            .replace("/", "_")
+        )
+
+
+        st.download_button(
+            "⬇️ Download Country CSV",
+
+            data=country_cases.to_csv(
+                index=False
+            ),
+
+            file_name=
+            f"{safe_name}_covid_data.csv",
+
+            mime="text/csv"
+        )
 
 
 # ============================================================
@@ -1273,38 +1364,28 @@ st.markdown(
     unsafe_allow_html=True
 )
 
+
 st.markdown(
     """
     <div class="info-box">
 
-    <strong>COVID-19 Pulse</strong> is a
-    Python-based data visualization project.
+    <strong>COVID-19 Pulse</strong> is an academic
+    data-visualization project developed using
+    Python, Pandas, Plotly and Streamlit.
 
     <br><br>
 
-    Technologies used:
-
-    <br>
-    • Python
-    <br>
-    • Pandas
-    <br>
-    • Plotly
-    <br>
-    • Streamlit
+    The dashboard provides COVID-19 case trends,
+    death trends, vaccination information,
+    country comparison and downloadable data.
 
     <br><br>
 
-    The dashboard provides global and
-    country-level COVID-19 reporting trends,
-    interactive charts, vaccination information,
-    country comparison and CSV downloads.
-
-    <br><br>
-
-    COVID-19 reporting can vary between countries
-    because of differences in testing,
-    reporting practices and data revisions.
+    The data is sourced from Our World in Data.
+    COVID-19 reporting figures may change because
+    of reporting revisions, testing differences
+    and differences in reporting practices between
+    countries.
 
     </div>
     """,
